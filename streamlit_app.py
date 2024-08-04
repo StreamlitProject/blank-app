@@ -1,62 +1,48 @@
 import streamlit as st
-from jdoodle import Jdoodle
-from codemirror import CodeMirror
-from pydoodle import Compiler
+import requests
+from streamlit_ace import st_ace
 
-# Create a JDoodle instance
-jdoodle = Jdoodle(api_key="YOUR_API_KEY")
+# JDoodle API credentials (replace with your actual credentials)
+JDoodle_clientId = 'da1586f97ac8d94d052add1c1fbad2d9'
+JDoodle_clientSecret = '122a89db5c5230a2fb63903580ac0cc8d7e21b4e2917f89c5feeb5dd6fe65f15'
 
-# Create a CodeMirror instance
-code_mirror = CodeMirror(
-    value="# Write your code here",
-    mode="python",
-    theme="material",
-    height=500,
-    width=800
-)
+# Function to run the code using JDoodle API
+def run_code(language, code):
+    # Mapping Streamlit language selection to JDoodle parameters
+    language_map = {
+        "Python": ("python3", "3"),
+        "Java": ("java", "4")
+    }
 
-# Create a Pydoodle compiler instance
-compiler = Compiler()
+    if language not in language_map:
+        return "Unsupported language"
 
-# Streamlit app
-st.title("Interactive Coding Environment")
+    jdoodle_language, version_index = language_map[language]
 
-# Language selection
-language = st.selectbox("Select a language", ["Python", "Java"])
+    url = "https://api.jdoodle.com/v1/execute"
+    data = {
+        "clientId": JDoodle_clientId,
+        "clientSecret": JDoodle_clientSecret,
+        "script": code,
+        "language": jdoodle_language,
+        "versionIndex": version_index
+    }
 
-# Code editor
-st.write("Write your code below:")
-code_editor = st.text_area("", value=code_mirror.value, height=500)
+    response = requests.post(url, json=data)
+    result = response.json()
+    
+    return result.get("output", result.get("error", "Unknown error"))
 
-# Compile and run button
-st.button("Compile and Run")
+# Streamlit app layout
+st.title("Java and Python Code Compiler")
 
-# Output area
-st.write("Output:")
-output_area = st.text_area("", height=200)
+language = st.selectbox("Select Language", ["Python", "Java"])
 
-# Compile and run logic
-if st.button("Compile and Run"):
-    # Get the code from the editor
-    code = code_editor.value
+# Use streamlit-ace for code input formatting
+code = st_ace(language=language.lower(), theme='monokai', font_size=14, height=300, auto_update=True)
 
-    # Set the language for JDoodle
-    if language == "Python":
-        language_id = 71  # Python 3
-    elif language == "Java":
-        language_id = 62  # Java 8
-
-    # Compile and run the code using JDoodle
-    result = jdoodle.compile_and_run(code, language_id)
-
-    # Display the output
-    output_area.value = result.output
-
-    # Compile and run the code using Pydoodle
-    if language == "Python":
-        result = compiler.compile_and_run(code, "python3")
-    elif language == "Java":
-        result = compiler.compile_and_run(code, "java")
-
-    # Display the output
-    output_area.value = result.output
+if st.button("Run Code"):
+   
+    output = run_code(language, code)
+    
+    st.text_area("Output", output, height=300)

@@ -1,3 +1,4 @@
 streamlit
-pydoodle
-codemirror-python
+requests
+streamlit-ace
+pip == 24.2

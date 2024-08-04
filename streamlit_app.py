@@ -1,6 +1,7 @@
 import streamlit as st
 from jdoodle import Jdoodle
 from codemirror import CodeMirror
+from pydoodle import Compiler
 
 # Create a JDoodle instance
 jdoodle = Jdoodle(api_key="YOUR_API_KEY")
@@ -13,6 +14,9 @@ code_mirror = CodeMirror(
     height=500,
     width=800
 )
+
+# Create a Pydoodle compiler instance
+compiler = Compiler()
 
 # Streamlit app
 st.title("Interactive Coding Environment")
@@ -44,6 +48,15 @@ if st.button("Compile and Run"):
 
     # Compile and run the code using JDoodle
     result = jdoodle.compile_and_run(code, language_id)
+
+    # Display the output
+    output_area.value = result.output
+
+    # Compile and run the code using Pydoodle
+    if language == "Python":
+        result = compiler.compile_and_run(code, "python3")
+    elif language == "Java":
+        result = compiler.compile_and_run(code, "java")
 
     # Display the output
     output_area.value = result.output
